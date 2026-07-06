@@ -189,24 +189,15 @@ export default {
       else next = this.clampIndex(next);
       this.setIndex(next);
     },
+    // Toolbar buttons only emit trigger events — behavior is wired via element workflows.
     downloadCurrent() {
       const c = this.current;
       if (!c) return;
-      // Best-effort browser download; cross-origin files usually open in a tab instead.
-      const a = document.createElement("a");
-      a.href = c.url;
-      a.download = c.name || "";
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
       this.$emit("trigger-event", { name: "download", event: { index: this.index, url: c.url, name: c.name } });
     },
     openCurrent() {
       const c = this.current;
       if (!c) return;
-      window.open(c.url, "_blank", "noopener,noreferrer");
       this.$emit("trigger-event", { name: "openTab", event: { index: this.index, url: c.url, name: c.name } });
     },
     emitClose() { this.$emit("trigger-event", { name: "close", event: { index: this.index } }); },
