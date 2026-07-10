@@ -12,6 +12,18 @@
         <button v-if="content.showClose !== false" type="button" class="pp-btn pp-btn--ghost" @click="emitClose">
           <svg class="pp-svg" v-bind="svgAttrs"><path :d="ic('x')"></path></svg> {{ content.closeLabel || 'Close' }}
         </button>
+        <template v-if="content.showDelete === true">
+          <template v-if="confirming">
+            <span class="pp-confirm__text">{{ content.confirmText || 'Delete this attachment?' }}</span>
+            <button type="button" class="pp-btn pp-btn--danger" @click="doDelete">
+              <svg class="pp-svg" v-bind="svgAttrs"><path :d="ic('trash')"></path></svg> {{ content.confirmYesLabel || 'Confirm' }}
+            </button>
+            <button type="button" class="pp-btn pp-btn--ghost" @click="confirming = false">{{ content.confirmNoLabel || 'Cancel' }}</button>
+          </template>
+          <button v-else type="button" class="pp-btn pp-btn--danger" @click="askDelete" :disabled="!current">
+            <svg class="pp-svg" v-bind="svgAttrs"><path :d="ic('trash')"></path></svg> {{ content.deleteLabel || 'Delete' }}
+          </button>
+        </template>
         <div class="pp-toolbar__spacer"></div>
         <span v-if="content.showCounter !== false && items.length" class="pp-counter">{{ index + 1 }} of {{ items.length }}</span>
       </div>
@@ -75,6 +87,7 @@ const ICONS = {
   "chevron-right": "M9 18l6-6-6-6",
   file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6",
   play: "M5 3l14 9-14 9V3z",
+  trash: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6",
 };
 
 const IMG_RE = /\.(png|jpe?g|gif|webp|svg|avif|bmp|heic)(\?|#|$)/i;
@@ -85,7 +98,7 @@ export default {
   props: { content: { type: Object, required: true }, uid: { type: String, required: false } },
   emits: ["trigger-event"],
   data() {
-    return { index: 0, thumbPage: 0, _onKeydown: null };
+    return { index: 0, thumbPage: 0, confirming: false, _onKeydown: null };
   },
   created() {
     this.index = this.clampIndex(Number(this.content.startIndex) || 0);
@@ -106,9 +119,9 @@ export default {
     if (this._onKeydown) document.removeEventListener("keydown", this._onKeydown);
   },
   watch: {
-    "content.attachments"() { this.index = this.clampIndex(this.index); this.thumbPage = this.pageOf(this.index); },
+    "content.attachments"() { this.index = this.clampIndex(this.index); this.thumbPage = this.pageOf(this.index); this.confirming = false; },
     "content.startIndex"(v) { this.setIndex(this.clampIndex(Number(v) || 0), true); },
-    index(v) { this.thumbPage = this.pageOf(v); },
+    index(v) { this.thumbPage = this.pageOf(v); this.confirming = false; },
     thumbsPerPage() { this.thumbPage = this.pageOf(this.index); },
   },
   computed: {
@@ -201,6 +214,21 @@ export default {
       this.$emit("trigger-event", { name: "openTab", event: { index: this.index, url: c.url, name: c.name } });
     },
     emitClose() { this.$emit("trigger-event", { name: "close", event: { index: this.index } }); },
+    // Delete is emit-only: it fires the `delete` trigger with the current item
+    // so an element workflow can remove it from Airtable/Supabase. The viewer
+    // does NOT mutate the bound array itself — it reflects the source once your
+    // workflow refreshes the collection.
+    askDelete() {
+      if (!this.current) return;
+      if (this.content.confirmDelete === false) return this.doDelete();
+      this.confirming = true;
+    },
+    doDelete() {
+      const c = this.current;
+      if (!c) return;
+      this.confirming = false;
+      this.$emit("trigger-event", { name: "delete", event: { index: this.index, url: c.url, name: c.name, attachment: c.raw } });
+    },
   },
 };
 </script>
@@ -238,6 +266,9 @@ export default {
 .pp-btn--primary:hover:not(:disabled) { filter: brightness(1.08); }
 .pp-btn--ghost { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
 .pp-btn--ghost:hover:not(:disabled) { background: var(--surface-2); }
+.pp-btn--danger { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; border-color: color-mix(in srgb, #ef4444 32%, transparent); }
+.pp-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, #ef4444 20%, transparent); }
+.pp-confirm__text { font-size: 12.5px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
 
 /* stage */
 .pp-stage { position: relative; display: flex; align-items: center; justify-content: center; height: var(--pp-stage-h, 480px); background: var(--stage-bg); overflow: hidden; }

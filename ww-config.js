@@ -4,6 +4,7 @@ export default {
     { name: "change", label: { en: "On attachment change" }, event: { index: 0, url: "", name: "", attachment: {} } },
     { name: "download", label: { en: "On download click" }, event: { index: 0, url: "", name: "" } },
     { name: "openTab", label: { en: "On open-in-tab click" }, event: { index: 0, url: "", name: "" } },
+    { name: "delete", label: { en: "On delete (confirmed)" }, event: { index: 0, url: "", name: "", attachment: {} } },
     { name: "close", label: { en: "On close" }, event: { index: 0 } },
   ],
   properties: {
@@ -36,6 +37,15 @@ export default {
     showClose: { label: { en: "Show Close button" }, type: "OnOff", defaultValue: true, bindable: true },
     closeLabel: { label: { en: "Close label" }, type: "Text", defaultValue: "Close", bindable: true },
     showCounter: { label: { en: "Show counter (n of N)" }, type: "OnOff", defaultValue: true, bindable: true },
+
+    // ---- delete (emit-only: fires the `delete` trigger; wire the actual
+    // removal via an element workflow, then refresh the bound collection) ----
+    showDelete: { label: { en: "Show Delete button" }, type: "OnOff", defaultValue: false, bindable: true },
+    deleteLabel: { label: { en: "Delete label" }, type: "Text", defaultValue: "Delete", bindable: true },
+    confirmDelete: { label: { en: "Confirm before deleting" }, type: "OnOff", defaultValue: true, bindable: true },
+    confirmText: { label: { en: "Confirm prompt" }, type: "Text", defaultValue: "Delete this attachment?", bindable: true },
+    confirmYesLabel: { label: { en: "Confirm button label" }, type: "Text", defaultValue: "Confirm", bindable: true },
+    confirmNoLabel: { label: { en: "Cancel button label" }, type: "Text", defaultValue: "Cancel", bindable: true },
 
     // ---- viewer ----
     stageHeight: { label: { en: "Viewer height (px)" }, type: "Number", options: { min: 200, max: 1200, step: 10 }, defaultValue: 480, bindable: true },
